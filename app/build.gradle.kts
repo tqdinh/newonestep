@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -103,5 +104,9 @@ dependencies {
     implementation ("androidx.camera:camera-view:${cameraxVersion}")
     implementation ("androidx.camera:camera-lifecycle:$cameraxVersion")
 
+    val material3_version ="1.1.0"
+    implementation("androidx.compose.material3:material3:$material3_version")
+    val constraintLayout_version ="1.0.1"
+    implementation ("androidx.constraintlayout:constraintlayout-compose:$constraintLayout_version")
 
 }
