@@ -205,6 +205,7 @@ fun ScrollableBottomSheetWithCarousel() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Map Preview Section
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

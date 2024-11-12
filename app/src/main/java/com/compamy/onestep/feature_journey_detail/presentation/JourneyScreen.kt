@@ -43,7 +43,7 @@ fun JourneyScreen(
     val screenWidthSize = LocalConfiguration.current.screenWidthDp.dp
     Scaffold() { padding ->
         Box(
-            modifier = Modifier.padding().fillMaxSize().background(Color.Red)
+            modifier = Modifier.padding().fillMaxSize()
         ) {
             LazyRow(
                 modifier = Modifier

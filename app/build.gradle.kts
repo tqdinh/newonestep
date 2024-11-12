@@ -130,6 +130,8 @@ dependencies {
     val mockkVersion ="1.13.13"
     testImplementation("io.mockk:mockk:$mockkVersion")
 
+    implementation("com.google.accompanist:accompanist-navigation-animation:0.36.0")
+
 
 
 

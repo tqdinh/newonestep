@@ -1,3 +1,5 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">OneStep</string>
+    <string name="mapbox_access_token" translatable="false" tools:ignore="UnusedResources">pk.eyJ1IjoidHFkaW5oaGNtdXMiLCJhIjoiY20zZWw5NnlwMGV0NzJpcjM1cW1sb3hvaiJ9.lRb_d4u7ClBPZP7qsUmo7w</string>
+
 </resources>

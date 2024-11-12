@@ -8,17 +8,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.TopAppBar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,7 +37,7 @@ import com.compamy.onestep.feature_home.presentation.HomeScreen
 import com.compamy.onestep.feature_record.presentation.JourneyScreen
 import com.compamy.onestep.feature_record.presentation.MapScreen
 import com.compamy.onestep.feature_record.presentation.NotificationScreen
-import com.compamy.onestep.feature_record.presentation.RecordScreen
+import com.compamy.onestep.feature_record.presentation.MyJourneyScreen
 import com.compamy.onestep.ui.theme.OneStepTheme
 import com.compamy.onestep.util.Screen
 
@@ -164,7 +163,7 @@ fun mainScreen() {
             bottomBar = {
                 if(currentRoute == Screen.HomeScreen.route
                     || currentRoute == Screen.MapScreen.route
-                    ||currentRoute == Screen.RecordScreen.route
+
                     || currentRoute == Screen.NotificationScreen .route
                     ||currentRoute == Screen.AccountScreen.route
                     )
@@ -184,7 +183,32 @@ fun mainScreen() {
                         HomeScreen(navController = navController, 123)
                     }
 
-                    composable(route = Screen.JourneyDetailScreen.route) {
+                    composable(route = Screen.JourneyDetailScreen.route,
+                        enterTransition = {  ->
+                            slideInVertically(
+                                initialOffsetY = { fullHeight -> fullHeight }, // Start from bottom
+                                animationSpec = tween(durationMillis = 500)
+                            )
+                        },
+                        exitTransition = { ->
+                            slideOutVertically(
+                                targetOffsetY = { fullHeight -> fullHeight }, // Exit to bottom
+                                animationSpec = tween(durationMillis = 500)
+                            )
+                        },
+                        popEnterTransition = { ->
+                            slideInVertically(
+                                initialOffsetY = { fullHeight -> fullHeight }, // Pop in from bottom
+                                animationSpec = tween(durationMillis = 500)
+                            )
+                        },
+                        popExitTransition = {  ->
+                            slideOutVertically(
+                                targetOffsetY = { fullHeight -> fullHeight }, // Pop out to bottom
+                                animationSpec = tween(durationMillis = 500)
+                            )
+                        }
+                        ) {
                         JourneyScreen(navController = navController)
                     }
 
@@ -195,8 +219,31 @@ fun mainScreen() {
                 composable(route = Screen.MapScreen.route) {
                     MapScreen(navController = navController)
                 }
-                composable(route = Screen.RecordScreen.route) {
-                    RecordScreen(navController = navController)
+                composable(route = Screen.RecordScreen.route,enterTransition = {  ->
+                    slideInVertically(
+                        initialOffsetY = { fullHeight -> fullHeight }, // Start from bottom
+                        animationSpec = tween(durationMillis = 500)
+                    )
+                },
+                    exitTransition = { ->
+                        slideOutVertically(
+                            targetOffsetY = { fullHeight -> fullHeight }, // Exit to bottom
+                            animationSpec = tween(durationMillis = 500)
+                        )
+                    },
+                    popEnterTransition = { ->
+                        slideInVertically(
+                            initialOffsetY = { fullHeight -> fullHeight }, // Pop in from bottom
+                            animationSpec = tween(durationMillis = 500)
+                        )
+                    },
+                    popExitTransition = {  ->
+                        slideOutVertically(
+                            targetOffsetY = { fullHeight -> fullHeight }, // Pop out to bottom
+                            animationSpec = tween(durationMillis = 500)
+                        )
+                    }) {
+                    MyJourneyScreen(navController = navController)
                 }
                 composable(route = Screen.NotificationScreen.route) {
                     NotificationScreen(navController = navController)

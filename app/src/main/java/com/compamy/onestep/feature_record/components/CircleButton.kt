@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun CircleButton(onClick: () -> Unit) {
+fun CircleButton(onClick:  () -> Unit) {
     Button(
         onClick = onClick, modifier = Modifier
             .size(80.dp)
