@@ -7,4 +7,5 @@ sealed class Screen (val route:String){
     object NotificationScreen:Screen("notification")
     object AccountScreen:Screen("account")
     object CameraScreen:Screen("camera")
+    object JourneyDetailScreen:Screen("journey_detail")
 }

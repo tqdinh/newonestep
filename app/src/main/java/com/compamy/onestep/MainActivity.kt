@@ -29,10 +29,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.compamy.onestep.feature_home.presentation.AccountScreen
 import com.compamy.onestep.feature_home.presentation.HomeScreen
+import com.compamy.onestep.feature_record.presentation.JourneyScreen
 import com.compamy.onestep.feature_record.presentation.MapScreen
 import com.compamy.onestep.feature_record.presentation.NotificationScreen
 import com.compamy.onestep.feature_record.presentation.RecordScreen
@@ -56,8 +59,7 @@ class MainActivity : ComponentActivity() {
 
         when (PackageManager.PERMISSION_GRANTED) {
             ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.CAMERA
+                this, android.Manifest.permission.CAMERA
             ) -> {
 
             }
@@ -78,6 +80,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun bottomNavigation(navController: NavHostController) {
     val currentRoute = navController.currentDestination?.route
+
 
     BottomNavigation(
         backgroundColor = Color.White,
@@ -150,19 +153,49 @@ fun bottomNavigation(navController: NavHostController) {
 fun mainScreen() {
     OneStepTheme {
         val navController = rememberNavController()
+
+        val navBackStackEntry = navController.currentBackStackEntryAsState()
+
+        val currentRoute = navBackStackEntry.value?.destination?.route
+
         Scaffold(modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding(), topBar = { mainAppBar() },
-            bottomBar = { bottomNavigation(navController) }) { padding ->
+            .statusBarsPadding(),
+            bottomBar = {
+                if(currentRoute == Screen.HomeScreen.route
+                    || currentRoute == Screen.MapScreen.route
+                    ||currentRoute == Screen.RecordScreen.route
+                    || currentRoute == Screen.NotificationScreen .route
+                    ||currentRoute == Screen.AccountScreen.route
+                    )
+
+                bottomNavigation(navController)
+            }) { padding ->
 
             NavHost(
                 modifier = Modifier.padding(padding),
                 navController = navController,
-                startDestination = Screen.HomeScreen.route
+                startDestination = "main_grapth"
             ) {
-                composable(route = Screen.HomeScreen.route) {
-                    HomeScreen(navController = navController,123)
+
+                navigation(startDestination = Screen.HomeScreen.route,route="main_grapth")
+                {
+                    composable(route = Screen.HomeScreen.route) {
+                        HomeScreen(navController = navController, 123)
+                    }
+
+                    composable(route = Screen.JourneyDetailScreen.route) {
+                        JourneyScreen(navController = navController)
+                    }
+
                 }
+
+
+                composable(route = Screen.JourneyDetailScreen.route) {
+                    JourneyScreen(navController = navController)
+                }
+
+
                 composable(route = Screen.MapScreen.route) {
                     MapScreen(navController = navController)
                 }
@@ -178,48 +211,23 @@ fun mainScreen() {
                 composable(
                     route = Screen.CameraScreen.route + "?journeyId={journeyId}&placeId={placeId}",
                     arguments = listOf(navArgument(name = "journeyId") {
-                        type= NavType.StringType
-                        defaultValue=""
+                        type = NavType.StringType
+                        defaultValue = ""
 
                     }, navArgument(name = "placeId") {
-                        type= NavType.StringType
-                        defaultValue=""
+                        type = NavType.StringType
+                        defaultValue = ""
 
                     })
                 ) { backStackEntry ->
-                    val jid = backStackEntry.arguments?.getString("journeyId")?:""
-                    val pid = backStackEntry.arguments?.getString("placeId")?:""
+                    val jid = backStackEntry.arguments?.getString("journeyId") ?: ""
+                    val pid = backStackEntry.arguments?.getString("placeId") ?: ""
 
                     CameraScreen(navController = navController, jid, pid)
                 }
+
             }
         }
     }
 }
-
-@Preview
-@Composable
-fun mainAppBar() {
-    TopAppBar(
-        title = {
-            Text(text = "Home", style = MaterialTheme.typography.bodySmall)
-        },
-        actions = {
-            IconButton(onClick = { /* Handle search click */ }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_search), // Use a suitable search icon
-                    contentDescription = "Search"
-                )
-            }
-        },
-        backgroundColor = Color.White
-    )
-}
-
-@Composable
-fun previewBottomnav() {
-
-
-}
-
 

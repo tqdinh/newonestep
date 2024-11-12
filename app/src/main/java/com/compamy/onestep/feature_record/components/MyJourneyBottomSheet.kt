@@ -1,6 +1,6 @@
 package com.compamy.onestep.feature_record.components
 
-import androidx.compose.foundation.Image
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,26 +11,135 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.Divider
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
 import com.compamy.onestep.R
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun bottomSheet() {
+    val sheetHeight = LocalConfiguration.current.screenHeightDp.dp * 0.5f
+    val scope = rememberCoroutineScope()
+    val bottomSheetState = rememberBottomSheetScaffoldState(bottomSheetState = rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded))
+
+    BottomSheetScaffold(
+        scaffoldState = bottomSheetState,
+        sheetPeekHeight = sheetHeight,
+        sheetContent = {
+           // bottomSheetContent()
+            ScrollableBottomSheetWithCarousel()
+        }) {
+
+    }
+}
+
+@Preview
+@Composable
+fun previewBottomSheet() {
+    bottomSheet()
+}
+
+@Composable
+fun bottomSheetContent() {
+    Column(
+        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Column(
+            modifier = Modifier
+                .background(Color.White)
+                .padding(10.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(text = "Long An trip", style = MaterialTheme.typography.headlineLarge)
+            Text("Tan tru hang cau vua,LongAn,Vietname", color = Color.Gray)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Divider(color = Color.Gray, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier
+                .padding(10.dp)
+                .height(50.dp)
+                .fillMaxWidth()
+        ) {
+
+
+            ConstraintLayout(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Gray)
+
+            ) {
+
+                val (text0, text1) = createRefs()
+                Text(text = "1.4Mi", modifier = Modifier.constrainAs(text0) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                }, style = MaterialTheme.typography.headlineMedium, color = Color.Black)
+
+                Text(text = "Route length", modifier = Modifier.constrainAs(text1) {
+                    start.linkTo(text0.start)
+                    top.linkTo(text0.bottom)
+
+                })
+
+            }
+
+            ConstraintLayout(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Green)
+            ) {
+                val (text0, text1) = createRefs()
+
+                Text(text = "30 cp", modifier = Modifier.constrainAs(text0) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                }, style = MaterialTheme.typography.headlineMedium, color = Color.Black)
+
+                Text(text = "No. Checkount ", modifier = Modifier.constrainAs(text1) {
+                    start.linkTo(text0.start)
+                    top.linkTo(text0.bottom)
+
+                })
+
+            }
+
+
+        }
+
+
+        Text(text = "This route will take you to the Pulau Perhentian Windmill area. There are beautiful sea views... more")
+
+
+
+    }
+
+}
+
+
 
 @Preview
 @Composable
@@ -51,22 +160,7 @@ fun ScrollableBottomSheetWithCarousel() {
                 .verticalScroll(rememberScrollState())
         ) {
             // Carousel at the top
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-            ) {
-                items(images.size) { i ->
-                    Image(
-                        painter = images[i],
-                        contentDescription = "Carousel Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .width(300.dp)
-                            .padding(4.dp)
-                    )
-                }
-            }
+
 
             // Scrollable Bottom Sheet content
             Column(
@@ -131,33 +225,14 @@ fun ScrollableBottomSheetWithCarousel() {
         }
 
         // Bottom Buttons pinned at the bottom
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = { /* Handle download action */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)), // Dark green color for the Download button
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .padding(end = 8.dp)
-            ) {
-                Text("Download", color = Color.White)
-            }
-            OutlinedButton(
-                onClick = { /* Handle navigate action */ },
-                colors = ButtonDefaults.outlinedButtonColors(),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .padding(start = 8.dp)
-            ) {
-                Text("Navigate")
-            }
-        }
+
+
     }
+}
+
+@Preview
+@Composable
+fun previewBottomSheetContent() {
+    bottomSheetContent()
+
 }

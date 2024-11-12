@@ -1,6 +1,7 @@
 package com.compamy.onestep.feature_home.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,11 +48,13 @@ fun journeyCard(
     date: String,
     title: String,
     desc: String,
-    photoList: List<String>
+    photoList: List<String>,
+    onClick:()->Unit
 ) {
     val lazyImageWidth = LocalConfiguration.current.screenWidthDp.dp * 0.5f
     val lazyImageHeight = LocalConfiguration.current.screenHeightDp.dp * 0.3f
-    Card {
+    Card(modifier = Modifier.clickable { onClick.invoke()
+    }) {
         Column {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -180,7 +183,7 @@ fun previewJourneyCard() {
         "October 23, 2024 at 9:45",
         "Long An",
         "Embark on the adventure of a lifetime! Our exclusive trip package offers you the chance to escape the ordinary and immerse yourself in breathtaking destinations, cultural wonders, and thrilling activities. Imagine exploring hidden gems, tasting",
-        listOf()
+        listOf(), onClick = {}
     )
 
 }

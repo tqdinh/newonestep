@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    kotlin("kapt")
+ //   kotlin("kapt")
 //    id("com.google.dagger.hilt.android")
 }
 
@@ -32,11 +32,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
@@ -76,15 +79,15 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
-    kapt("androidx.room:room-compiler:$room_version")
+   // kapt("androidx.room:room-compiler:$room_version")
 
     val hilt_version="2.50"
     implementation("com.google.dagger:hilt-android:$hilt_version")
-    kapt("com.google.dagger:hilt-android-compiler:$hilt_version")
+    //kapt("com.google.dagger:hilt-android-compiler:$hilt_version")
 
     val androidTestDagger="2.37"
     androidTestImplementation("com.google.dagger:hilt-android-testing:$androidTestDagger")
-    kaptAndroidTest("com.google.dagger:hilt-android-compiler:$androidTestDagger")
+    //kaptAndroidTest("com.google.dagger:hilt-android-compiler:$androidTestDagger")
 
     val nav_version = "2.8.3"
     implementation("androidx.navigation:navigation-compose:$nav_version")
@@ -108,5 +111,27 @@ dependencies {
     implementation("androidx.compose.material3:material3:$material3_version")
     val constraintLayout_version ="1.0.1"
     implementation ("androidx.constraintlayout:constraintlayout-compose:$constraintLayout_version")
+
+
+
+    val jUnitVersion ="4.13.2"
+    testImplementation("junit:junit:$jUnitVersion")
+
+    val robolectricVersion ="1.6.1"
+    testImplementation("androidx.test:core:$robolectricVersion")
+
+    val mockitoFrameworkVersion ="5.14.2"
+    testImplementation("org.mockito:mockito-core:$mockitoFrameworkVersion")
+
+
+    val mockitoKotlinVersion ="5.4.0"
+    testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
+
+    val mockkVersion ="1.13.13"
+    testImplementation("io.mockk:mockk:$mockkVersion")
+
+
+
+
 
 }
