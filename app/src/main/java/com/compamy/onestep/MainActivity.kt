@@ -191,10 +191,6 @@ fun mainScreen() {
                 }
 
 
-                composable(route = Screen.JourneyDetailScreen.route) {
-                    JourneyScreen(navController = navController)
-                }
-
 
                 composable(route = Screen.MapScreen.route) {
                     MapScreen(navController = navController)

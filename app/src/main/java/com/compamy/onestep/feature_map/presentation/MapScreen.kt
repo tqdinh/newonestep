@@ -11,7 +11,7 @@ import com.compamy.onestep.util.Screen
 
 fun MapScreen (navController: NavController){
     Column {
-        Button(onClick = {navController.navigate(Screen.CameraScreen .route)}) {
+        Button(onClick = {navController.navigate(Screen.JourneyDetailScreen .route)}) {
             Text("Detail")
         }
 

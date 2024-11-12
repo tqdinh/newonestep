@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +31,7 @@ import com.compamy.onestep.R
 import com.compamy.onestep.feature_home.data.data_source.entity.JourneyWithPlaces
 import com.compamy.onestep.feature_record.components.bottomSheet
 import com.compamy.onestep.feature_record.components.journeyBottomSheet
+import okhttp3.internal.wait
 
 @Composable
 fun JourneyScreen(
@@ -38,45 +41,47 @@ fun JourneyScreen(
 
     val screenHeightSize = LocalConfiguration.current.screenHeightDp.dp
     val screenWidthSize = LocalConfiguration.current.screenWidthDp.dp
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-
+    Scaffold() { padding ->
+        Box(
+            modifier = Modifier.padding().fillMaxSize().background(Color.Red)
         ) {
-            items(images.size) { i ->
-                Image(
-                    painter = painterResource(images[i]),
-                    contentDescription = "Carousel Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .height(screenHeightSize * 0.5f)
-                        .width(screenWidthSize * 0.7f)
-                        .padding(4.dp)
-                )
-            }
-        }
-        journeyBottomSheet()
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .background(Color.White)
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
 
-            , horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(onClick = {}) {
-                Text("Download")
+            ) {
+                items(images.size) { i ->
+                    Image(
+                        painter = painterResource(images[i]),
+                        contentDescription = "Carousel Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .height(screenHeightSize * 0.5f)
+                            .width(screenWidthSize * 0.7f)
+                            .padding(4.dp)
+                    )
+                }
             }
-            OutlinedButton(onClick = {}) {
-                Text("Navigate")
-            }
-        }
+            journeyBottomSheet()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(Color.White)
 
+                , horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = {}) {
+                    Text("Download")
+                }
+                OutlinedButton(onClick = {}) {
+                    Text("Navigate")
+                }
+            }
+
+        }
     }
+
 }
 
 @Preview
