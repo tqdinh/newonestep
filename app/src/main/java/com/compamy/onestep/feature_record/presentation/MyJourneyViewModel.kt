@@ -13,15 +13,20 @@ class MyJourneyViewModel @Inject constructor(private val tracked:Boolean) :ViewM
     private val _isOnTracking : MutableState<Boolean>  = mutableStateOf(tracked)
     val isOnTracking : State<Boolean> =_isOnTracking
 
+    private val _currentJourney :MutableState<String ?>  = mutableStateOf(null)
+    val currentJourney :State<String?> = _currentJourney
+
     fun onAction(action:JourneyActions)
     {
         when(action){
             is JourneyActions.ToggleTracking -> {
                 _isOnTracking.value =action.value
             }
-
             is JourneyActions.TrackingLoading -> TODO()
             is JourneyActions.TrackingStarted -> TODO()
+            is JourneyActions.SetCurrentId -> {
+                _currentJourney.value = action.id
+            }
         }
     }
 

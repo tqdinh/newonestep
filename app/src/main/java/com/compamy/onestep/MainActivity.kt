@@ -2,8 +2,13 @@ package com.compamy.onestep
 
 
 import CameraScreen
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.IBinder
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,6 +43,7 @@ import com.compamy.onestep.feature_record.presentation.JourneyScreen
 import com.compamy.onestep.feature_record.presentation.MapScreen
 import com.compamy.onestep.feature_record.presentation.NotificationScreen
 import com.compamy.onestep.feature_record.presentation.MyJourneyScreen
+import com.compamy.onestep.feature_tracking.data.data_source.foreground_service.LocationTrackingService
 import com.compamy.onestep.ui.theme.OneStepTheme
 import com.compamy.onestep.util.Screen
 

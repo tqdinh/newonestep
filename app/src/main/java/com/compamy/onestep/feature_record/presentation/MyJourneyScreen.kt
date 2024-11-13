@@ -1,5 +1,6 @@
 package com.compamy.onestep.feature_record.presentation
 
+import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,12 +34,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.compamy.onestep.R
 import com.compamy.onestep.feature_record.components.CircleButton
+import com.compamy.onestep.feature_record.components.StopTrackingButton
+import com.compamy.onestep.feature_record.components.TakePhotoButton
 import com.compamy.onestep.feature_tracking.data.data_source.foreground_service.LocationTrackingService
+import com.compamy.onestep.util.Screen
 
 @Composable
 fun MyJourneyScreen(
@@ -45,33 +51,35 @@ fun MyJourneyScreen(
     viewModel: MyJourneyViewModel = viewModel(factory = MyJourneyViewModelFactory(false)),
     images: List<Int> = listOf(R.drawable.sea, R.drawable.jungle, R.drawable.valley)
 ) {
-
-
-    val context = LocalContext.current
-
     var boundService by remember {
         mutableStateOf<LocationTrackingService?>(null)
     }
+    val context = LocalContext.current
+
 
     val connection = remember {
         object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                 boundService = (service as LocationTrackingService.TrackingBinder).getService()
+                boundService?.currentJourneyId?.let {
+                    viewModel.onAction(JourneyActions.SetCurrentId(it))
+                }
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
                 boundService = null
+                viewModel.onAction(JourneyActions.SetCurrentId(null))
             }
 
         }
     }
-
-
-
-    val isOnTrack: Boolean = viewModel.isOnTracking.value
-
-    val screenHeightSize = LocalConfiguration.current.screenHeightDp.dp
-    val screenWidthSize = LocalConfiguration.current.screenWidthDp.dp
+    LaunchedEffect(true) {
+        if (isMyServiceRunnning(context, LocationTrackingService::class.java)) {
+            val intent = Intent(context, LocationTrackingService::class.java)
+            context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+    val currentTrackingJourneyId :String? =viewModel.currentJourney?.value
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -92,22 +100,45 @@ fun MyJourneyScreen(
                 contentAlignment = Alignment.Center
             ) {
 
-                if (isOnTrack) Row(
+                if (null != currentTrackingJourneyId) Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    CircleButton { }
-                    CircleButton {
-                        bindService(context,connection)
-                        viewModel.onAction(JourneyActions.ToggleTracking(!isOnTrack))
+                    CircleButton(currentTrackingJourneyId) {  }
+                    TakePhotoButton {
+                        navController.navigate(Screen.CameraScreen.route)
+                        {
+                            popUpTo(Screen.RecordScreen.route) { inclusive = true }
+                        }
                     }
-                    CircleButton { }
+                    StopTrackingButton {
+                        viewModel.onAction(JourneyActions.SetCurrentId(null))
+                        boundService?.stopForeground()
+                        context.unbindService(connection)
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Gray)
+                            .align(Alignment.CenterVertically)
+                    )
+                    {
+                        LazyRow() {
+                            items(images) { img ->
+                                Image(
+                                    painter = painterResource(img),
+                                    contentDescription = "",
+                                    modifier = Modifier
+                                        .width(20.dp)
+                                        .height(20.dp)
+                                )
+                            }
+                        }
+                    }
 
                 }
                 else CircleButton {
-                    bindService(context,connection)
-                    viewModel.onAction(JourneyActions.ToggleTracking(!isOnTrack))
-
+                    startAndBindService(context,connection)
                 }
 
 
@@ -259,10 +290,34 @@ fun previewRecordScreenLandScape() {
 @Composable
 fun onTracking(
     navController: NavController,
+    viewModel: MyJourneyViewModel = viewModel(factory = MyJourneyViewModelFactory(false)),
+
     images: List<Int> = listOf(R.drawable.sea, R.drawable.jungle, R.drawable.valley)
 ) {
     val screenHeightSize = LocalConfiguration.current.screenHeightDp.dp
     val screenWidthSize = LocalConfiguration.current.screenWidthDp.dp
+
+
+    var boundService by remember {
+        mutableStateOf<LocationTrackingService?>(null)
+    }
+
+    val connection = remember {
+        object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                boundService = (service as LocationTrackingService.TrackingBinder).getService()
+
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                boundService = null
+            }
+
+        }
+    }
+
+
+    val isOnTrack: Boolean = viewModel.isOnTracking.value
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -286,9 +341,32 @@ fun onTracking(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    CircleButton { }
-                    CircleButton { }
-                    CircleButton { }
+                    TakePhotoButton { }
+                    StopTrackingButton {
+
+                        //bindService(context,connection)
+                      //  viewModel.onAction(JourneyActions.ToggleTracking(!isOnTrack))
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Gray)
+                            .align(Alignment.CenterVertically)
+                    )
+                    {
+                        LazyRow() {
+                            items(images) { img ->
+                                Image(
+                                    painter = painterResource(img),
+                                    contentDescription = "",
+                                    modifier = Modifier
+                                        .width(20.dp)
+                                        .height(20.dp)
+                                )
+                            }
+                        }
+                    }
+
 
                 }
             }
@@ -314,10 +392,21 @@ fun previewOnTrackingLandScape() {
 }
 
 
-fun bindService( context: Context,  connection:ServiceConnection)
-{
-    val intent = Intent(context,LocationTrackingService::class.java)
-    context.bindService(intent,connection,Context.BIND_AUTO_CREATE)
+
+fun startAndBindService(context: Context, connection: ServiceConnection) {
+    val intent = Intent(context, LocationTrackingService::class.java)
+    context.startService(intent)
+    context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+
 }
+
+
+private fun isMyServiceRunnning(context: Context, serviceClass: Class<*>): Boolean {
+    val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    return manager.getRunningServices(Int.MAX_VALUE).any {
+        it.service.className == serviceClass.name
+    }
+}
+
 
 

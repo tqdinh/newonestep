@@ -132,7 +132,8 @@ dependencies {
 
     implementation("com.google.accompanist:accompanist-navigation-animation:0.36.0")
 
-
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:rules:1.6.1")
 
 
 
