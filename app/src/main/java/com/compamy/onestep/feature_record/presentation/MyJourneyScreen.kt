@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,11 +17,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +46,11 @@ import com.compamy.onestep.R
 import com.compamy.onestep.feature_record.components.CircleButton
 import com.compamy.onestep.feature_record.components.StopTrackingButton
 import com.compamy.onestep.feature_record.components.TakePhotoButton
+import com.compamy.onestep.feature_record.components.myMap
 import com.compamy.onestep.feature_tracking.data.data_source.foreground_service.LocationTrackingService
 import com.compamy.onestep.util.Screen
+import com.compamy.onestep.util.TimeConvert
+import com.mapbox.geojson.Point
 
 @Composable
 fun MyJourneyScreen(
@@ -55,6 +62,9 @@ fun MyJourneyScreen(
         mutableStateOf<LocationTrackingService?>(null)
     }
     val context = LocalContext.current
+    val currentTrackingJourneyId: String? = viewModel.currentJourney?.value
+    val elapsedTime = viewModel.elapsedFlow.collectAsState(initial = 0)
+    val currentLocation = viewModel.currentLocationState.collectAsState(initial = null)
 
 
     val connection = remember {
@@ -63,6 +73,13 @@ fun MyJourneyScreen(
                 boundService = (service as LocationTrackingService.TrackingBinder).getService()
                 boundService?.currentJourneyId?.let {
                     viewModel.onAction(JourneyActions.SetCurrentId(it))
+                }
+                boundService?.elapsedTime?.let {
+                    viewModel.onAction(JourneyActions.SetLastingTime(it))
+                }
+
+                boundService?.currentLocation?.let {
+                    viewModel.onAction(JourneyActions.SetLocationFlow(it))
                 }
             }
 
@@ -73,13 +90,13 @@ fun MyJourneyScreen(
 
         }
     }
+
     LaunchedEffect(true) {
         if (isMyServiceRunnning(context, LocationTrackingService::class.java)) {
             val intent = Intent(context, LocationTrackingService::class.java)
             context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
     }
-    val currentTrackingJourneyId :String? =viewModel.currentJourney?.value
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -91,10 +108,16 @@ fun MyJourneyScreen(
                     .background(Color.Gray)
                     .weight(8f)
                     .fillMaxWidth()
-            )
+            ) {
+                currentLocation?.value?.let {
+                    val point = Point.fromLngLat( it.lon,it.lat)
+                    myMap(point)
+                }
+
+            }
             Box(
                 modifier = Modifier
-                    .background(Color.Yellow)
+                    .background(Color.White)
                     .weight(2f)
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -104,10 +127,15 @@ fun MyJourneyScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    CircleButton(currentTrackingJourneyId) {  }
+                    Box(modifier = Modifier.size(80.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = TimeConvert.convertMillisToReadableTime(elapsedTime.value)
+                        )
+
+                    }
+
                     TakePhotoButton {
-                        navController.navigate(Screen.CameraScreen.route)
-                        {
+                        navController.navigate(Screen.CameraScreen.route) {
                             popUpTo(Screen.RecordScreen.route) { inclusive = true }
                         }
                     }
@@ -121,8 +149,7 @@ fun MyJourneyScreen(
                         modifier = Modifier
                             .background(Color.Gray)
                             .align(Alignment.CenterVertically)
-                    )
-                    {
+                    ) {
                         LazyRow() {
                             items(images) { img ->
                                 Image(
@@ -138,7 +165,7 @@ fun MyJourneyScreen(
 
                 }
                 else CircleButton {
-                    startAndBindService(context,connection)
+                    startAndBindService(context, connection)
                 }
 
 
@@ -345,15 +372,14 @@ fun onTracking(
                     StopTrackingButton {
 
                         //bindService(context,connection)
-                      //  viewModel.onAction(JourneyActions.ToggleTracking(!isOnTrack))
+                        //  viewModel.onAction(JourneyActions.ToggleTracking(!isOnTrack))
                     }
 
                     Box(
                         modifier = Modifier
                             .background(Color.Gray)
                             .align(Alignment.CenterVertically)
-                    )
-                    {
+                    ) {
                         LazyRow() {
                             items(images) { img ->
                                 Image(
@@ -390,7 +416,6 @@ fun previewOnTracking() {
 fun previewOnTrackingLandScape() {
     onTrackingLandScape(rememberNavController())
 }
-
 
 
 fun startAndBindService(context: Context, connection: ServiceConnection) {

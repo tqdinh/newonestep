@@ -27,6 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OneStep"
         tools:targetApi="31">
+
         <service
             android:foregroundServiceType="location"
             android:name=".feature_tracking.data.data_source.foreground_service.LocationTrackingService"

@@ -1,5 +1,6 @@
 package com.compamy.onestep.feature_tracking.data.data_source.foreground_service
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,17 +8,26 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.compamy.onestep.R
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -29,12 +39,20 @@ class LocationTrackingService : Service() {
     }
 
     var isRunning = false
+    private val _elapsedTime = MutableStateFlow(0L)
+    val elapsedTime :StateFlow<Long> = _elapsedTime
+
+    private val _currentLocation:MutableStateFlow<LocationState?> = MutableStateFlow(null)
+     val currentLocation :StateFlow<LocationState?> =_currentLocation
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
+
+
+
+
 
     var currentJourneyId: String? = null
-
-    fun setCurrentJouneyId(journeId: String) {
-        currentJourneyId = journeId
-    }
 
     var serviceJob = Job()
     val binder = TrackingBinder()
@@ -43,6 +61,24 @@ class LocationTrackingService : Service() {
     @Override
     override fun onCreate() {
         super.onCreate()
+
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // Setup location callback
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                for (location in locationResult.locations) {
+                    _currentLocation.value = LocationState(location.latitude , location.longitude)
+                    // Use location data
+                  Log.d("LOCATION_CHANGE", "Lat: ${location.latitude}, Lng: ${location.longitude}")
+                }
+            }
+        }
+
+        requestLocationUpdates()
+
+
         isRunning = true
         currentJourneyId =UUID.randomUUID().toString()
         val channel = NotificationChannel(
@@ -59,6 +95,25 @@ class LocationTrackingService : Service() {
     override fun onBind(intent: Intent): IBinder {
         return binder
     }
+    private fun requestLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            stopSelf()
+            return
+        }
+
+        val locationRequest = LocationRequest.create().apply {
+            interval = 2000 // Every 10 seconds
+            fastestInterval = 500 // Fastest every 5 seconds
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, mainLooper)
+    }
+
 
     @SuppressLint("ForegroundServiceType")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -102,11 +157,9 @@ class LocationTrackingService : Service() {
             serviceJob.cancel()
             serviceJob = Job()
             CoroutineScope(Dispatchers.Default + serviceJob).launch {
-                var i = 0
                 while (true) {
-                    i += 1
                     delay(1000)
-                    Log.d("BGTHREAD", "${i}")
+                    _elapsedTime.value+=1
                 }
             }
         }
@@ -127,5 +180,7 @@ class LocationTrackingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob.cancel()
+
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }
