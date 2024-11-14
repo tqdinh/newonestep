@@ -14,6 +14,9 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.compamy.onestep.R
@@ -38,21 +41,18 @@ class LocationTrackingService : Service() {
         private const val ACTION_STOP_SERVICE = "STOP_SERVICE"
     }
 
-    var isRunning = false
     private val _elapsedTime = MutableStateFlow(0L)
-    val elapsedTime :StateFlow<Long> = _elapsedTime
+    val elapsedTime: StateFlow<Long> = _elapsedTime
 
-    private val _currentLocation:MutableStateFlow<LocationState?> = MutableStateFlow(null)
-     val currentLocation :StateFlow<LocationState?> =_currentLocation
+    private val _currentJourneyId: MutableStateFlow<String?> = MutableStateFlow(null)
+    val currentJourneyId : StateFlow<String?> = _currentJourneyId
+
+    private val _currentLocation: MutableStateFlow<LocationState?> = MutableStateFlow(null)
+    val currentLocation: StateFlow<LocationState?> = _currentLocation
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
-
-
-
-
-    var currentJourneyId: String? = null
 
     var serviceJob = Job()
     val binder = TrackingBinder()
@@ -69,18 +69,20 @@ class LocationTrackingService : Service() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 for (location in locationResult.locations) {
-                    _currentLocation.value = LocationState(location.latitude , location.longitude)
+                    _currentLocation.value = LocationState(location.latitude, location.longitude)
                     // Use location data
-                  Log.d("LOCATION_CHANGE", "Lat: ${location.latitude}, Lng: ${location.longitude}")
+                    Log.d(
+                        "LOCATION_CHANGE",
+                        "Lat: ${location.latitude}, Lng: ${location.longitude}"
+                    )
                 }
             }
         }
 
         requestLocationUpdates()
 
+        _currentJourneyId.value = UUID.randomUUID().toString()
 
-        isRunning = true
-        currentJourneyId =UUID.randomUUID().toString()
         val channel = NotificationChannel(
             CHANNEL_ID,
             "Location tracking",
@@ -95,6 +97,7 @@ class LocationTrackingService : Service() {
     override fun onBind(intent: Intent): IBinder {
         return binder
     }
+
     private fun requestLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -117,9 +120,6 @@ class LocationTrackingService : Service() {
 
     @SuppressLint("ForegroundServiceType")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        isRunning = true
-
         if (ACTION_STOP_SERVICE == intent?.action) {
             stopForeground()
             return START_NOT_STICKY
@@ -159,17 +159,16 @@ class LocationTrackingService : Service() {
             CoroutineScope(Dispatchers.Default + serviceJob).launch {
                 while (true) {
                     delay(1000)
-                    _elapsedTime.value+=1
+                    _elapsedTime.value += 1
                 }
             }
         }
     }
 
     fun stopForeground() {
-        currentJourneyId=null
+        // stopForeground()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-
     }
 
 
@@ -179,8 +178,9 @@ class LocationTrackingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        serviceJob.cancel()
+        _currentJourneyId.value = null
 
+        serviceJob.cancel()
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }

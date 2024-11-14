@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -85,9 +86,19 @@ fun MyJourneyScreen(
 
             override fun onServiceDisconnected(name: ComponentName?) {
                 boundService = null
-                viewModel.onAction(JourneyActions.SetCurrentId(null))
             }
 
+        }
+    }
+
+    DisposableEffect(Unit) {
+        // Code that runs when the Composable is displayed (entering composition)
+        println("Composable Entered Composition")
+
+        // This block is called when the Composable leaves the composition
+        onDispose {
+            println("Composable Destroyed (Leaving Composition)")
+            context.unbindService(connection)
         }
     }
 
@@ -110,7 +121,7 @@ fun MyJourneyScreen(
                     .fillMaxWidth()
             ) {
                 currentLocation?.value?.let {
-                    val point = Point.fromLngLat( it.lon,it.lat)
+                    val point = Point.fromLngLat(it.lon, it.lat)
                     myMap(point)
                 }
 
@@ -129,6 +140,7 @@ fun MyJourneyScreen(
                 ) {
                     Box(modifier = Modifier.size(80.dp), contentAlignment = Alignment.Center) {
                         Text(
+                           // text = "${currentTrackingJourneyId}"
                             text = TimeConvert.convertMillisToReadableTime(elapsedTime.value)
                         )
 
@@ -140,9 +152,8 @@ fun MyJourneyScreen(
                         }
                     }
                     StopTrackingButton {
-                        viewModel.onAction(JourneyActions.SetCurrentId(null))
-                        boundService?.stopForeground()
                         context.unbindService(connection)
+                        boundService?.stopForeground()
                     }
 
                     Box(

@@ -39,18 +39,30 @@ class MyJourneyViewModel @Inject constructor(private val tracked: Boolean) : Vie
             is JourneyActions.TrackingLoading -> TODO()
             is JourneyActions.TrackingStarted -> TODO()
             is JourneyActions.SetCurrentId -> {
-                _currentJourney.value = action.id
+                collectJourneyIdFromService(action.id)
+               // _currentJourney.value = action.id.value
             }
 
             is JourneyActions.SetLastingTime -> {
                 collectStateFromService(action.elapsedTime)
             }
 
-            is JourneyActions.SetLocationFlow ->{
+            is JourneyActions.SetLocationFlow -> {
                 collectLocationState(action.locationFlow)
             }
         }
     }
+
+    fun collectJourneyIdFromService(journeyId: StateFlow<String?>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            journeyId.collect { id ->
+                _currentJourney.value = id
+
+            }
+        }
+    }
+
+
 
     fun collectStateFromService(serviceTime: StateFlow<Long>) {
         viewModelScope.launch(Dispatchers.IO) {
