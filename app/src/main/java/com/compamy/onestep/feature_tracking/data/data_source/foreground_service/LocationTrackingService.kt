@@ -45,7 +45,7 @@ class LocationTrackingService : Service() {
     val elapsedTime: StateFlow<Long> = _elapsedTime
 
     private val _currentJourneyId: MutableStateFlow<String?> = MutableStateFlow(null)
-    val currentJourneyId : StateFlow<String?> = _currentJourneyId
+    val currentJourneyId: StateFlow<String?> = _currentJourneyId
 
     private val _currentLocation: MutableStateFlow<LocationState?> = MutableStateFlow(null)
     val currentLocation: StateFlow<LocationState?> = _currentLocation
@@ -56,6 +56,8 @@ class LocationTrackingService : Service() {
 
     var serviceJob = Job()
     val binder = TrackingBinder()
+
+    var onServiceStopped: (() -> Unit)? = null
 
     @RequiresApi(Build.VERSION_CODES.O)
     @Override
@@ -182,5 +184,6 @@ class LocationTrackingService : Service() {
 
         serviceJob.cancel()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        onServiceStopped?.invoke()
     }
 }

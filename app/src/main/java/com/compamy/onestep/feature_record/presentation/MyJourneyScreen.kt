@@ -5,8 +5,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.res.Configuration
 import android.os.IBinder
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -39,22 +40,58 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.window.core.layout.WindowWidthSizeClass
 import com.compamy.onestep.R
 import com.compamy.onestep.feature_record.components.CircleButton
 import com.compamy.onestep.feature_record.components.StopTrackingButton
 import com.compamy.onestep.feature_record.components.TakePhotoButton
 import com.compamy.onestep.feature_record.components.myMap
 import com.compamy.onestep.feature_tracking.data.data_source.foreground_service.LocationTrackingService
+import com.compamy.onestep.util.DevicePreviews
 import com.compamy.onestep.util.Screen
 import com.compamy.onestep.util.TimeConvert
 import com.mapbox.geojson.Point
 
 @Composable
-fun MyJourneyScreen(
+fun journeyScreen(
+    navController: NavController,
+    viewModel: MyJourneyViewModel = viewModel(factory = MyJourneyViewModelFactory(false)),
+    images: List<Int> = listOf(R.drawable.sea, R.drawable.jungle, R.drawable.valley)
+) {
+
+    val orientation = LocalConfiguration.current.orientation
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    when (windowSizeClass.windowWidthSizeClass) {
+        WindowWidthSizeClass.MEDIUM -> {
+            journeyScreenLandscape(rememberNavController())
+
+        }
+
+        WindowWidthSizeClass.COMPACT -> {
+
+            when (orientation) {
+                Configuration.ORIENTATION_LANDSCAPE -> {
+                    journeyScreenLandscape(rememberNavController())
+                }
+
+                Configuration.ORIENTATION_PORTRAIT -> {
+                    journeyScreenPortrail(rememberNavController())
+                }
+            }
+        }
+
+        WindowWidthSizeClass.EXPANDED -> {
+            journeyScreenLandscape(rememberNavController())
+
+        }
+    }
+}
+
+@Composable
+fun journeyScreenPortrail(
     navController: NavController,
     viewModel: MyJourneyViewModel = viewModel(factory = MyJourneyViewModelFactory(false)),
     images: List<Int> = listOf(R.drawable.sea, R.drawable.jungle, R.drawable.valley)
@@ -66,12 +103,19 @@ fun MyJourneyScreen(
     val currentTrackingJourneyId: String? = viewModel.currentJourney?.value
     val elapsedTime = viewModel.elapsedFlow.collectAsState(initial = 0)
     val currentLocation = viewModel.currentLocationState.collectAsState(initial = null)
+    var isBounded: Boolean = false
 
 
     val connection = remember {
         object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                boundService = (service as LocationTrackingService.TrackingBinder).getService()
+                isBounded = true
+                boundService = (service as LocationTrackingService.TrackingBinder).getService().also {
+                    it.onServiceStopped ={
+                        isBounded =false
+                        boundService=null
+                    }
+                }
                 boundService?.currentJourneyId?.let {
                     viewModel.onAction(JourneyActions.SetCurrentId(it))
                 }
@@ -92,13 +136,12 @@ fun MyJourneyScreen(
     }
 
     DisposableEffect(Unit) {
-        // Code that runs when the Composable is displayed (entering composition)
         println("Composable Entered Composition")
 
-        // This block is called when the Composable leaves the composition
         onDispose {
             println("Composable Destroyed (Leaving Composition)")
-            context.unbindService(connection)
+            if (isBounded && null != connection)
+                context.unbindService(connection)
         }
     }
 
@@ -140,7 +183,7 @@ fun MyJourneyScreen(
                 ) {
                     Box(modifier = Modifier.size(80.dp), contentAlignment = Alignment.Center) {
                         Text(
-                           // text = "${currentTrackingJourneyId}"
+                            // text = "${currentTrackingJourneyId}"
                             text = TimeConvert.convertMillisToReadableTime(elapsedTime.value)
                         )
 
@@ -186,21 +229,67 @@ fun MyJourneyScreen(
     }
 }
 
-@Preview
 @Composable
-fun previewRecordScreen() {
-    MyJourneyScreen(rememberNavController())
-}
-
-
-@Composable
-fun RecordScreenLandScape(
+fun journeyScreenLandscape(
     navController: NavController,
+    viewModel: MyJourneyViewModel = viewModel(factory = MyJourneyViewModelFactory(false)),
     images: List<Int> = listOf(R.drawable.sea, R.drawable.jungle, R.drawable.valley)
 ) {
 
-    val screenHeightSize = LocalConfiguration.current.screenHeightDp.dp
-    val screenWidthSize = LocalConfiguration.current.screenWidthDp.dp
+    var boundService by remember {
+        mutableStateOf<LocationTrackingService?>(null)
+    }
+    val context = LocalContext.current
+    val currentTrackingJourneyId: String? = viewModel.currentJourney?.value
+    val elapsedTime = viewModel.elapsedFlow.collectAsState(initial = 0)
+    val currentLocation = viewModel.currentLocationState.collectAsState(initial = null)
+    var isBounded: Boolean = false
+
+    val connection = remember {
+        object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                isBounded = true
+                boundService = (service as LocationTrackingService.TrackingBinder).getService().also {
+                    it.onServiceStopped ={
+                        isBounded=false
+                        boundService =null
+                    }
+                }
+                boundService?.currentJourneyId?.let {
+                    viewModel.onAction(JourneyActions.SetCurrentId(it))
+                }
+                boundService?.elapsedTime?.let {
+                    viewModel.onAction(JourneyActions.SetLastingTime(it))
+                }
+
+                boundService?.currentLocation?.let {
+                    viewModel.onAction(JourneyActions.SetLocationFlow(it))
+                }
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                boundService = null
+            }
+
+        }
+    }
+
+    DisposableEffect(Unit) {
+        println("Composable Entered Composition")
+
+        onDispose {
+            println("Composable Destroyed (Leaving Composition)")
+            if (isBounded && null != connection)
+                context.unbindService(connection)
+        }
+    }
+
+    LaunchedEffect(true) {
+        if (isMyServiceRunnning(context, LocationTrackingService::class.java)) {
+            val intent = Intent(context, LocationTrackingService::class.java)
+            context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -212,25 +301,87 @@ fun RecordScreenLandScape(
                     .background(Color.Gray)
                     .weight(8f)
                     .fillMaxHeight()
-            )
+            ) {
+                currentLocation?.value?.let {
+                    val point = Point.fromLngLat(it.lon, it.lat)
+                    myMap(point)
+                }
+            }
             Box(
                 modifier = Modifier
-                    .background(Color.Yellow)
+                    .background(Color.White)
                     .weight(2f)
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
 
-
-                Row(
+                if (null != currentTrackingJourneyId) Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    CircleButton { }
-                    CircleButton { }
-                    CircleButton { }
+                    ConstraintLayout {
+                        val (chrono, buttons, places) = createRefs()
+
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .constrainAs(chrono) {
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                }, contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = TimeConvert.convertMillisToReadableTime(elapsedTime.value)
+                            )
+                        }
+                        Column(modifier = Modifier.constrainAs(buttons) {
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            top.linkTo(chrono.bottom)
+                        }) {
+
+                            TakePhotoButton {
+                                navController.navigate(Screen.CameraScreen.route) {
+                                    popUpTo(Screen.RecordScreen.route) { inclusive = true }
+                                }
+                            }
+                            StopTrackingButton {
+                                context.unbindService(connection)
+                                boundService?.stopForeground()
+                            }
+
+                        }
+                        Box(
+                            modifier = Modifier
+                                .background(Color.Gray)
+                                .constrainAs(places) {
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                    top.linkTo(buttons.bottom)
+                                }
+                        ) {
+                            LazyRow() {
+                                items(images) { img ->
+                                    Image(
+                                        painter = painterResource(img),
+                                        contentDescription = "",
+                                        modifier = Modifier
+                                            .width(20.dp)
+                                            .height(20.dp)
+                                    )
+                                }
+                            }
+                        }
+
+
+                    }
+
 
                 }
+                else CircleButton {
+                    startAndBindService(context, connection)
+                }
+
 
             }
 
@@ -315,13 +466,14 @@ fun onTrackingLandScape(
     }
 }
 
-@Preview(
-    showSystemUi = true,
-    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=landscape"
-)
+//
+//@Preview(
+//    showSystemUi = true,
+//    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=landscape"
+//)
 @Composable
 fun previewRecordScreenLandScape() {
-    RecordScreenLandScape(rememberNavController())
+    journeyScreenLandscape(rememberNavController())
 }
 
 
@@ -343,7 +495,9 @@ fun onTracking(
     val connection = remember {
         object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                boundService = (service as LocationTrackingService.TrackingBinder).getService()
+                boundService = (service as LocationTrackingService.TrackingBinder).getService().also {
+
+                }
 
             }
 
@@ -413,20 +567,20 @@ fun onTracking(
 
 }
 
-@Preview
-@Composable
-fun previewOnTracking() {
-    onTracking(rememberNavController())
-}
+//@Preview
+//@Composable
+//fun previewOnTracking() {
+//    onTracking(rememberNavController())
+//}
 
-@Preview(
-    showSystemUi = true,
-    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=landscape"
-)
-@Composable
-fun previewOnTrackingLandScape() {
-    onTrackingLandScape(rememberNavController())
-}
+//@Preview(
+//    showSystemUi = true,
+//    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=landscape"
+//)
+//@Composable
+//fun previewOnTrackingLandScape() {
+//    onTrackingLandScape(rememberNavController())
+//}
 
 
 fun startAndBindService(context: Context, connection: ServiceConnection) {
@@ -445,4 +599,11 @@ private fun isMyServiceRunnning(context: Context, serviceClass: Class<*>): Boole
 }
 
 
+@DevicePreviews
+@Composable
+fun previewMyScreen() {
+    journeyScreen(rememberNavController())
+
+
+}
 
